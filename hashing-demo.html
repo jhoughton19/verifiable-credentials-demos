@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamper-Evident Document Authentication — Tooele County Demonstration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAF6EC;
+    --paper-deep: #F4ECD9;
+    --card: #FDFBF5;
+    --ink: #1F1816;
+    --ink-soft: #4A3F37;
+    --rule: #8A7D6B;
+    --rule-soft: #C9BFA8;
+    --verified: #2C5F2D;
+    --verified-bg: #E8F0E2;
+    --altered: #8B2914;
+    --altered-bg: #F4E2DC;
+    --oxblood: #6B1F1F;
+    --accent: #B8842C;
+
+    --serif: "EB Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-image:
+      radial-gradient(ellipse at top left, rgba(184,132,44,0.04), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(107,31,31,0.03), transparent 50%),
+      linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 40px 80px;
+  }
+
+  /* ====== HEADER ====== */
+  header {
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+    position: relative;
+  }
+
+  .corner-mark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .corner-mark .serial {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0;
+    color: var(--oxblood);
+  }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--oxblood);
+    margin-bottom: 18px;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 52px;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+
+  h1 .amp {
+    font-style: italic;
+    color: var(--oxblood);
+    font-weight: 400;
+  }
+
+  .subtitle {
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
+    max-width: 720px;
+  }
+
+  .citation {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* Decorative rule */
+  .rule-ornament {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 36px 0;
+    color: var(--rule);
+  }
+  .rule-ornament::before,
+  .rule-ornament::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule-soft);
+  }
+  .rule-ornament .glyph {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--oxblood);
+  }
+
+  /* ====== DROPZONE ====== */
+  .dropzone {
+    border: 2px dashed var(--rule);
+    border-radius: 4px;
+    background: var(--card);
+    padding: 64px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .dropzone:hover {
+    border-color: var(--oxblood);
+    background: #FFFDF7;
+  }
+
+  .dropzone.dragging {
+    border-color: var(--oxblood);
+    border-style: solid;
+    background: #FFFDF7;
+    transform: scale(1.005);
+  }
+
+  .dropzone .drop-icon {
+    font-family: var(--serif);
+    font-size: 48px;
+    color: var(--rule);
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  .dropzone .drop-prompt {
+    font-size: 26px;
+    color: var(--ink);
+    margin: 0 0 8px;
+  }
+
+  .dropzone .drop-hint {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 8px 0 0;
+    letter-spacing: 0.02em;
+  }
+
+  .dropzone .or-divider {
+    margin: 18px 0 4px;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .sample-link {
+    background: none;
+    border: none;
+    color: var(--oxblood);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    padding: 0;
+  }
+  .sample-link:hover { color: #4A1414; }
+
+  /* ====== DOCUMENT DETAIL ====== */
+  .document-detail {
+    background: var(--card);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    padding: 32px;
+    margin-top: 28px;
+    box-shadow: 0 1px 0 rgba(31,24,22,0.04);
+  }
+
+  .section-label {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--oxblood);
+    font-weight: 700;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .section-label .numeral {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 18px;
+    letter-spacing: 0;
+    color: var(--accent);
+    text-transform: none;
+  }
+
+  .doc-meta {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    row-gap: 6px;
+    column-gap: 20px;
+    margin: 0 0 24px;
+    padding: 0 0 24px;
+    border-bottom: 1px dotted var(--rule-soft);
+  }
+
+  .doc-meta dt {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    align-self: baseline;
+  }
+
+  .doc-meta dd {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--ink);
+  }
+
+  .doc-meta dd.filename { font-weight: 600; }
+  .doc-meta dd.mono { font-family: var(--mono); font-size: 14px; }
+
+  /* ====== HASH DISPLAY ====== */
+  .hash-block {
+    margin-top: 20px;
+  }
+
+  .hash-display {
+    font-family: var(--mono);
+    font-size: 22px;
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    background: var(--paper);
+    border-left: 3px solid var(--oxblood);
+    padding: 20px 24px;
+    word-break: break-all;
+    user-select: all;
+  }
+
+  .hash-display.compact {
+    font-size: 16px;
+    padding: 14px 18px;
+  }
+
+  .hash-display .chunk {
+    display: inline-block;
+    margin-right: 0.6em;
+  }
+
+  .hash-display .char-changed {
+    color: var(--altered);
+    background: var(--altered-bg);
+    border-radius: 1px;
+    padding: 0 1px;
+  }
+
+  .hash-empty {
+    color: var(--ink-soft);
+    font-style: italic;
+    font-family: var(--serif);
+    font-size: 16px;
+    letter-spacing: 0;
+  }
+
+  /* Computing animation */
+  .hash-display.computing {
+    color: var(--rule);
+  }
+
+  @keyframes scramble {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  .hash-display.computing .chunk {
+    animation: scramble 0.6s ease-in-out infinite;
+  }
+
+  /* ====== LEDGER ====== */
+  .ledger {
+    margin-top: 36px;
+    background: var(--card);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(31,24,22,0.04);
+  }
+
+  .ledger-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 24px;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ledger-header .timestamp {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--paper-deep);
+    text-transform: none;
+  }
+
+  .ledger-grid {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+  }
+
+  .ledger-cell {
+    padding: 28px 28px 24px;
+  }
+
+  .ledger-divider {
+    background: var(--rule-soft);
+  }
+
+  .ledger-cell h3 {
+    margin: 0 0 8px;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+
+  .ledger-cell .cell-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    min-height: 1.4em;
+  }
+
+  .ledger-cell .hash-display {
+    font-size: 14px;
+    padding: 14px 16px;
+    border-left-width: 2px;
+  }
+
+  .status-banner {
+    padding: 20px 28px;
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-top: 1px solid var(--rule-soft);
+    background: var(--paper);
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .status-banner.match {
+    background: var(--verified-bg);
+    color: var(--verified);
+    font-style: normal;
+  }
+  .status-banner.mismatch {
+    background: var(--altered-bg);
+    color: var(--altered);
+    font-style: normal;
+  }
+  .status-banner .symbol {
+    font-family: var(--serif);
+    font-size: 26px;
+    margin-right: 10px;
+    vertical-align: -2px;
+  }
+
+  /* ====== ACTIONS ====== */
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: var(--serif);
+    font-size: 16px;
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+  }
+  .btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .btn.primary {
+    background: var(--oxblood);
+    color: var(--paper);
+    border-color: var(--oxblood);
+  }
+  .btn.primary:hover {
+    background: #4A1414;
+    border-color: #4A1414;
+  }
+  .btn.danger:hover {
+    background: var(--altered);
+    border-color: var(--altered);
+    color: var(--paper);
+  }
+  .btn.ghost {
+    background: transparent;
+    border-color: var(--rule);
+    color: var(--ink-soft);
+  }
+  .btn.ghost:hover {
+    background: var(--rule-soft);
+    color: var(--ink);
+  }
+
+  /* ====== TAMPER NOTE ====== */
+  .tamper-callout {
+    margin-top: 20px;
+    background: var(--altered-bg);
+    border-left: 3px solid var(--altered);
+    padding: 16px 22px;
+    font-family: var(--serif);
+    font-size: 16px;
+    color: var(--altered);
+    font-style: italic;
+  }
+  .tamper-callout strong {
+    font-style: normal;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--altered);
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  /* ====== FOOTER ====== */
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  footer .footer-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 8px;
+  }
+  footer .footer-row strong {
+    color: var(--oxblood);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+  footer p {
+    margin: 6px 0;
+    max-width: 800px;
+  }
+
+  /* ====== UTILITIES ====== */
+  .hidden { display: none !important; }
+
+  .legend {
+    margin-top: 36px;
+    background: var(--card);
+    border: 1px solid var(--rule-soft);
+    padding: 24px 28px;
+    border-radius: 4px;
+  }
+
+  .legend h4 {
+    margin: 0 0 12px;
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--oxblood);
+    font-weight: 700;
+  }
+
+  .legend ol {
+    margin: 0;
+    padding-left: 24px;
+    font-size: 16px;
+    color: var(--ink-soft);
+  }
+  .legend ol li {
+    margin: 6px 0;
+  }
+  .legend ol li strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Responsive */
+  @media (max-width: 760px) {
+    h1 { font-size: 36px; }
+    .subtitle { font-size: 18px; }
+    .page { padding: 32px 20px 60px; }
+    .ledger-grid { grid-template-columns: 1fr; }
+    .ledger-divider { height: 1px; width: 100%; }
+    .hash-display { font-size: 16px; padding: 14px 16px; }
+    .doc-meta { grid-template-columns: 1fr; row-gap: 2px; }
+    .doc-meta dt { margin-top: 10px; }
+    .corner-mark { position: static; text-align: left; margin-bottom: 16px; }
+  }
+
+  /* Print-ish polish */
+  ::selection { background: var(--accent); color: var(--paper); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="corner-mark">
+      Tooele County · Utah<br>
+      <span class="serial" id="session-serial">SER-—————</span>
+    </div>
+    <p class="eyebrow">Live Demonstration · Records Management Committee</p>
+    <h1>Tamper-Evident <span class="amp">&amp;</span> Verifiable<br>Document Authentication</h1>
+    <p class="subtitle">A working demonstration of the integrity primitive required for digitally authenticated records under Utah law.</p>
+    <p class="citation">Utah Code § 46-1-2(24) · § 17-71-301.5 · § 63A-12-117(4)(b)(i) · HB 319 (2026 G.S.)</p>
+  </header>
+
+  <div class="rule-ornament" aria-hidden="true">
+    <span class="glyph">§</span>
+  </div>
+
+  <!-- Step I: Drop -->
+  <section id="step-drop">
+    <p class="section-label"><span class="numeral">I.</span> Submit a document for authentication</p>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drop or select a document">
+      <div class="drop-icon">&para;</div>
+      <p class="drop-prompt">Drop a document here, or click to select.</p>
+      <p class="drop-hint">Any file type. Computed locally in your browser — nothing is uploaded.</p>
+      <p class="or-divider">— or —</p>
+      <button class="sample-link" id="btn-sample" type="button">use a sample deed</button>
+      <input type="file" id="file-input" style="display:none">
+    </div>
+  </section>
+
+  <!-- Step II: Detail -->
+  <section id="step-detail" class="document-detail hidden">
+    <p class="section-label"><span class="numeral">II.</span> Document received</p>
+    <dl class="doc-meta">
+      <dt>Filename</dt><dd class="filename" id="meta-name">—</dd>
+      <dt>Size</dt><dd id="meta-size">—</dd>
+      <dt>Type</dt><dd class="mono" id="meta-type">—</dd>
+      <dt>Received</dt><dd class="mono" id="meta-time">—</dd>
+    </dl>
+
+    <div class="hash-block">
+      <p class="section-label"><span class="numeral">III.</span> SHA-256 digest</p>
+      <div class="hash-display" id="current-hash"><span class="hash-empty">computing…</span></div>
+    </div>
+  </section>
+
+  <!-- Step IV: Ledger -->
+  <section id="step-ledger" class="ledger hidden">
+    <div class="ledger-header">
+      <span>Recording Ledger</span>
+      <span class="timestamp" id="ledger-time">—</span>
+    </div>
+    <div class="ledger-grid">
+      <div class="ledger-cell">
+        <h3>At Recording</h3>
+        <div class="cell-meta" id="recorded-meta">— not yet recorded —</div>
+        <div class="hash-display compact" id="recorded-hash"><span class="hash-empty">awaiting recording</span></div>
+      </div>
+      <div class="ledger-divider"></div>
+      <div class="ledger-cell">
+        <h3>At Verification</h3>
+        <div class="cell-meta" id="verify-meta">— awaiting verification —</div>
+        <div class="hash-display compact" id="verify-hash"><span class="hash-empty">awaiting verification</span></div>
+      </div>
+    </div>
+    <div class="status-banner" id="status-banner">— awaiting comparison —</div>
+  </section>
+
+  <!-- Tamper callout -->
+  <div class="tamper-callout hidden" id="tamper-callout">
+    <strong>Tampering simulated</strong>
+    One byte of <span id="tamper-filename">the document</span> was modified — <span id="tamper-detail">a single character changed</span>. Compare the verification hash to the recorded hash: nearly every character of the 64-character digest is different. This is the avalanche property of SHA-256, and it is why <em>any</em> alteration is detectable.
+  </div>
+
+  <!-- Step V: Actions -->
+  <section id="step-actions" class="actions hidden">
+    <button class="btn primary" id="btn-record">Record this hash</button>
+    <button class="btn" id="btn-verify" disabled>Re-verify</button>
+    <button class="btn danger" id="btn-tamper" disabled>Simulate tampering</button>
+    <button class="btn ghost" id="btn-reset">Reset demonstration</button>
+  </section>
+
+  <!-- Legend / talking points -->
+  <aside class="legend">
+    <h4>What this demonstration proves</h4>
+    <ol>
+      <li><strong>Determinism.</strong> The same document always produces the same 256-bit digest. Anyone with the document can independently verify the hash — no trusted database required.</li>
+      <li><strong>Tamper-evidence.</strong> Altering a single byte changes the digest almost entirely (the <em>avalanche</em> property). Any post-recording alteration is detectable by anyone who has the recorded hash.</li>
+      <li><strong>Privacy by computation.</strong> The hash reveals nothing about the document's contents. A county recorder can publish a hash without disclosing the underlying record.</li>
+      <li><strong>Statutory fit.</strong> SHA-256, applied at the moment of recording and re-verified on access, satisfies the "tamper-evident technology" requirement of Utah Code § 46-1-2(24) and the immutability characteristic required by § 63A-12-117(4)(b)(i).</li>
+    </ol>
+  </aside>
+
+  <footer>
+    <div class="footer-row">
+      <div><strong>Computation</strong><br>SHA-256 (FIPS 180-4) via Web Crypto API · client-side only</div>
+      <div><strong>No data transmitted</strong><br>Files never leave this browser tab</div>
+      <div><strong>Reference</strong><br>Tooele County State Archives Proposal § 2.1, § 3.1</div>
+    </div>
+    <p>Prepared by the Tooele County Recorder's Office in support of the County's proposal under Utah Code § 17-71-301.5. This demonstration may be reproduced and distributed without restriction.</p>
+  </footer>
+
+</div>
+
+<script>
+'use strict';
+
+// ====== STATE ======
+const state = {
+  originalBuffer: null,    // ArrayBuffer of file as first received
+  currentBuffer: null,     // ArrayBuffer being hashed now (may be tampered)
+  fileName: '',
+  fileSize: 0,
+  fileType: '',
+  receivedAt: null,
+  currentHash: '',
+  recordedHash: '',
+  recordedFileName: '',
+  recordedAt: null,
+  tampered: false,
+  tamperByteIndex: null,
+  sessionSerial: ''
+};
+
+// ====== UTIL ======
+function fmtBytes(n) {
+  if (n < 1024) return n + ' bytes';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  if (n < 1024 * 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + ' MB';
+  return (n / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+}
+
+function fmtTime(d) {
+  if (!d) return '—';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ` +
+         `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function genSerial() {
+  // Notarial-looking serial: TC-YYYYMMDD-XXXX
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const rand = Math.floor(Math.random() * 0x10000).toString(16).toUpperCase().padStart(4, '0');
+  return `TC-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${rand}`;
+}
+
+async function sha256Hex(buffer) {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const bytes = new Uint8Array(hashBuffer);
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+function renderHash(hex, diffAgainst) {
+  // Render a 64-char hex hash in 8 chunks of 8 chars each.
+  // If diffAgainst is provided, highlight characters that differ.
+  if (!hex) return '<span class="hash-empty">—</span>';
+  let out = '';
+  for (let i = 0; i < hex.length; i += 8) {
+    const chunk = hex.substr(i, 8);
+    let chunkHtml = '';
+    for (let j = 0; j < chunk.length; j++) {
+      const ch = chunk[j];
+      const otherCh = diffAgainst ? diffAgainst[i + j] : null;
+      if (diffAgainst && otherCh !== ch) {
+        chunkHtml += `<span class="char-changed">${ch}</span>`;
+      } else {
+        chunkHtml += ch;
+      }
+    }
+    out += `<span class="chunk">${chunkHtml}</span>`;
+  }
+  return out;
+}
+
+// ====== DOM ======
+const $ = (id) => document.getElementById(id);
+
+const dropzone = $('dropzone');
+const fileInput = $('file-input');
+const btnSample = $('btn-sample');
+
+const stepDrop = $('step-drop');
+const stepDetail = $('step-detail');
+const stepLedger = $('step-ledger');
+const stepActions = $('step-actions');
+const tamperCallout = $('tamper-callout');
+
+const metaName = $('meta-name');
+const metaSize = $('meta-size');
+const metaType = $('meta-type');
+const metaTime = $('meta-time');
+const currentHashEl = $('current-hash');
+
+const recordedMeta = $('recorded-meta');
+const recordedHashEl = $('recorded-hash');
+const verifyMeta = $('verify-meta');
+const verifyHashEl = $('verify-hash');
+const statusBanner = $('status-banner');
+const ledgerTime = $('ledger-time');
+
+const btnRecord = $('btn-record');
+const btnVerify = $('btn-verify');
+const btnTamper = $('btn-tamper');
+const btnReset = $('btn-reset');
+
+const sessionSerialEl = $('session-serial');
+const tamperFilenameEl = $('tamper-filename');
+const tamperDetailEl = $('tamper-detail');
+
+// Initialize session serial
+state.sessionSerial = genSerial();
+sessionSerialEl.textContent = state.sessionSerial;
+
+// ====== DRAG & DROP ======
+['dragenter', 'dragover'].forEach(ev => {
+  dropzone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.add('dragging');
+  });
+});
+
+['dragleave', 'drop'].forEach(ev => {
+  dropzone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove('dragging');
+  });
+});
+
+dropzone.addEventListener('drop', (e) => {
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    fileInput.click();
+  }
+});
+
+fileInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (f) handleFile(f);
+});
+
+// ====== SAMPLE DEED ======
+btnSample.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const sampleText = generateSampleDeed();
+  const blob = new Blob([sampleText], { type: 'text/plain' });
+  const file = new File([blob], 'sample-warranty-deed.txt', { type: 'text/plain' });
+  handleFile(file);
+});
+
+function generateSampleDeed() {
+  return `WARRANTY DEED
+
+THIS INDENTURE, made this 10th day of May, 2026, between
+JOHN Q. SETTLER and JANE Q. SETTLER, husband and wife, of
+Tooele County, State of Utah, parties of the first part,
+and ACME LAND HOLDINGS, LLC, a Utah limited liability
+company, party of the second part:
+
+WITNESSETH, that the said parties of the first part, for
+and in consideration of the sum of TEN DOLLARS ($10.00) and
+other good and valuable consideration, the receipt whereof
+is hereby acknowledged, do by these presents grant, bargain,
+sell, convey and warrant unto the said party of the second
+part, and unto its successors and assigns forever, all the
+following described real property, situate, lying and being
+in the County of Tooele, State of Utah, to-wit:
+
+  LOT 7, BLOCK 3, PLAT "A", TOOELE CITY SURVEY,
+  ACCORDING TO THE OFFICIAL PLAT THEREOF ON FILE
+  AND OF RECORD IN THE OFFICE OF THE TOOELE COUNTY
+  RECORDER.
+
+  Parcel No. 02-031-0-0007.
+
+TOGETHER with all and singular the tenements, hereditaments
+and appurtenances thereunto belonging.
+
+TO HAVE AND TO HOLD the same unto the said party of the
+second part, and unto its successors and assigns forever.
+
+This deed is presented as a sample document for purposes of
+demonstrating tamper-evident document authentication under
+Utah Code § 46-1-2(24) and § 17-71-301.5. It has no legal
+effect.
+
+________________________
+John Q. Settler
+
+________________________
+Jane Q. Settler
+
+STATE OF UTAH    )
+                 ) ss.
+COUNTY OF TOOELE )
+
+On this 10th day of May, 2026, before me personally appeared
+JOHN Q. SETTLER and JANE Q. SETTLER, known to me to be the
+persons whose names are subscribed to the foregoing
+instrument, and acknowledged to me that they executed the
+same.
+
+________________________
+Notary Public
+`;
+}
+
+// ====== FILE HANDLING ======
+async function handleFile(file) {
+  // Reset state preserving session
+  state.originalBuffer = null;
+  state.currentBuffer = null;
+  state.tampered = false;
+  state.tamperByteIndex = null;
+  state.fileName = file.name;
+  state.fileSize = file.size;
+  state.fileType = file.type || 'application/octet-stream';
+  state.receivedAt = new Date();
+
+  // Show UI
+  stepDetail.classList.remove('hidden');
+  stepActions.classList.remove('hidden');
+  tamperCallout.classList.add('hidden');
+
+  // Populate metadata
+  metaName.textContent = state.fileName;
+  metaSize.textContent = fmtBytes(state.fileSize);
+  metaType.textContent = state.fileType;
+  metaTime.textContent = fmtTime(state.receivedAt);
+
+  // Show computing state
+  currentHashEl.innerHTML = '<span class="hash-empty">computing SHA-256…</span>';
+  currentHashEl.classList.add('computing');
+
+  // Read into buffer
+  const buf = await file.arrayBuffer();
+  state.originalBuffer = buf;
+  state.currentBuffer = buf;
+
+  // Hash
+  await new Promise(r => setTimeout(r, 220)); // tiny delay for visual feedback
+  const hex = await sha256Hex(buf);
+  state.currentHash = hex;
+
+  currentHashEl.classList.remove('computing');
+  currentHashEl.innerHTML = renderHash(hex);
+
+  // Update button states
+  updateActionStates();
+
+  // Smooth scroll to detail
+  stepDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ====== ACTIONS ======
+btnRecord.addEventListener('click', recordHash);
+btnVerify.addEventListener('click', reverify);
+btnTamper.addEventListener('click', tamper);
+btnReset.addEventListener('click', reset);
+
+async function recordHash() {
+  if (!state.currentHash) return;
+  state.recordedHash = state.currentHash;
+  state.recordedFileName = state.fileName;
+  state.recordedAt = new Date();
+
+  // Show ledger
+  stepLedger.classList.remove('hidden');
+  recordedMeta.textContent = `${state.recordedFileName} · recorded ${fmtTime(state.recordedAt)}`;
+  recordedHashEl.innerHTML = renderHash(state.recordedHash);
+  verifyMeta.textContent = '— awaiting verification —';
+  verifyHashEl.innerHTML = '<span class="hash-empty">tap "Re-verify" to compute</span>';
+
+  ledgerTime.textContent = `Recorded ${fmtTime(state.recordedAt)} · Ser. ${state.sessionSerial}`;
+
+  statusBanner.className = 'status-banner';
+  statusBanner.innerHTML = '<em>Hash recorded. Ready to verify.</em>';
+
+  updateActionStates();
+
+  stepLedger.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function reverify() {
+  if (!state.currentBuffer) return;
+
+  verifyMeta.textContent = 'verifying…';
+  verifyHashEl.classList.add('computing');
+  verifyHashEl.innerHTML = '<span class="chunk">--------</span>'.repeat(8);
+
+  await new Promise(r => setTimeout(r, 280));
+
+  const hex = await sha256Hex(state.currentBuffer);
+  state.currentHash = hex;
+
+  // Also refresh the top "current" display
+  currentHashEl.innerHTML = renderHash(hex);
+
+  verifyHashEl.classList.remove('computing');
+
+  const now = new Date();
+  const match = (hex === state.recordedHash);
+  const tamperLabel = state.tampered ? ' (tampered copy)' : '';
+  verifyMeta.textContent = `${state.fileName}${tamperLabel} · verified ${fmtTime(now)}`;
+  verifyHashEl.innerHTML = renderHash(hex, state.recordedHash);
+
+  if (match) {
+    statusBanner.className = 'status-banner match';
+    statusBanner.innerHTML = '<span class="symbol">✓</span> MATCH — Document integrity verified';
+  } else {
+    statusBanner.className = 'status-banner mismatch';
+    statusBanner.innerHTML = '<span class="symbol">✗</span> MISMATCH — Document has been altered';
+  }
+}
+
+async function tamper() {
+  if (!state.originalBuffer) return;
+
+  // Clone the original buffer and flip one bit at a random position
+  const src = new Uint8Array(state.originalBuffer);
+  const tampered = new Uint8Array(src);
+  // Pick a position somewhere in the middle to make it dramatic but safe
+  const idx = Math.floor(src.length / 2);
+  tampered[idx] = tampered[idx] ^ 0x01; // flip lowest bit
+  state.currentBuffer = tampered.buffer;
+  state.tampered = true;
+  state.tamperByteIndex = idx;
+
+  // Rehash the top "current" panel
+  currentHashEl.classList.add('computing');
+  currentHashEl.innerHTML = '<span class="chunk">--------</span>'.repeat(8);
+  await new Promise(r => setTimeout(r, 220));
+  const hex = await sha256Hex(state.currentBuffer);
+  state.currentHash = hex;
+  currentHashEl.classList.remove('computing');
+  currentHashEl.innerHTML = renderHash(hex);
+
+  // Show tamper callout
+  tamperFilenameEl.textContent = state.fileName;
+  tamperDetailEl.textContent = `byte ${idx.toLocaleString()} of ${state.fileSize.toLocaleString()} — a single bit flipped`;
+  tamperCallout.classList.remove('hidden');
+
+  // If we've already recorded, auto-run verification to land the demo
+  if (state.recordedHash) {
+    await reverify();
+  } else {
+    tamperCallout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function reset() {
+  state.originalBuffer = null;
+  state.currentBuffer = null;
+  state.fileName = '';
+  state.fileSize = 0;
+  state.fileType = '';
+  state.receivedAt = null;
+  state.currentHash = '';
+  state.recordedHash = '';
+  state.recordedFileName = '';
+  state.recordedAt = null;
+  state.tampered = false;
+  state.tamperByteIndex = null;
+  state.sessionSerial = genSerial();
+  sessionSerialEl.textContent = state.sessionSerial;
+
+  stepDetail.classList.add('hidden');
+  stepLedger.classList.add('hidden');
+  stepActions.classList.add('hidden');
+  tamperCallout.classList.add('hidden');
+
+  fileInput.value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateActionStates() {
+  const hasFile = !!state.currentBuffer;
+  const hasRecording = !!state.recordedHash;
+  btnRecord.disabled = !hasFile;
+  btnVerify.disabled = !hasRecording;
+  btnTamper.disabled = !hasFile;
+
+  if (hasRecording) {
+    btnRecord.textContent = 'Re-record (replace)';
+    btnRecord.classList.remove('primary');
+  } else {
+    btnRecord.textContent = 'Record this hash';
+    btnRecord.classList.add('primary');
+  }
+}
+
+</script>
+</body>
+</html>
